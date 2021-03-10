@@ -1,4 +1,4 @@
-(defproject cc.qbits/flex "1.0.0-alpha1"
+(defproject cc.qbits/flex "1.0.0-alpha1-SNAPSHOT"
   :url "https://github.com/mpenet/flex"
 
   :dependencies [[org.clojure/clojure "1.10.2"]

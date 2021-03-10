@@ -8,11 +8,10 @@ Library that implements various methods from TCP congestion control to
 limit load on a resource. It's said to be adaptive in the sense that
 limits will evolve over time as we observe/measure latency.
 
-
 We provide both a middleware and an interceptor that will limit
 concurrency according to the limit algo specified.
 
-A middleware is composed of :
+A typical setup is composed of :
 
 * a Limit: defines how limit evolve from RTT averages, dropped
   requests, timeout. Flex has both

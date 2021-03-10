@@ -1,5 +1,7 @@
 # flex
 
+**WIP**
+
 > Hold your horses!
 
 Library that implements various methods from TCP congestion control to
@@ -21,7 +23,8 @@ A middleware is composed of :
   permission to proceed from current limit from the Limit and the
   current in-flight requests.  The simple limiter just compares limits
   against in-flight requests, but we can have a percentage based
-  implementation if needed (soon).
+  implementation if needed (soon), that can be handy if you want to
+  assign quotas to clients for instance.
 
 * Recorder: records current in-flight requests numbers
 

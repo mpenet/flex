@@ -1,5 +1,7 @@
 # flex
 
+![icon by https://thenounproject.com/ivankostriukov/](flex.png)
+
 **WIP**
 
 > Hold your horses!
@@ -35,14 +37,43 @@ A typical setup is composed of :
   very naive, potentially non monotonic clock, based on
   System/nanoTime.
 
+They are split that way so that you can compose simple but also
+complex systems. You can imagine sharing a Limit with N Limiters that
+would each have their own quotas, ex if you build a proxy for multiple
+upstreams that should have different quotas.
+
+From all of these components, calls to a resource will trigger a call
+to the Limiter to check if we can proceed with the request or if it
+should be rejected.
+
+If the request is accepted we will record it's
+[RTT](https://en.wikipedia.org/wiki/Round-trip_delay) and then send
+that value to the Sampler to be able later to get an average latency
+of to compute the a new Limit. Typically when we observe that latency
+increases we might decrease the acceptable `limit` and in case of
+latency decrease we would slowly go back up in limits. Depending on
+the Limit implementation used the rate at which `limit`
+increase/decrease happens can vary.
+
+Overtime we would see the actual concurrency `limit` of a service
+stabilize to a level that is its actual acceptable rate for near
+optimal operation.
 
 ## Installation
 
-Download from https://github.com/mpenet/flex
+[wip]
 
 ## Usage
+
+For now just playing via https://github.com/mpenet/flex/blob/main/dev/playground.clj
+
 ## Options
+
+[wip]
+
 ## Examples
+
+[wip]
 
 ## License
 

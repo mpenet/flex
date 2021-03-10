@@ -1,17 +1,47 @@
 (ns qbits.flex.limiter.simple
   (:require [qbits.flex.protocols :as p]
+            [qbits.flex.recorder :as recorder]
+            [qbits.flex.clock :as clock]
+            [qbits.flex.sampler.windowed :as sampler]
             [exoscale.ex :as ex]))
 
 (defn make
-  ([] (make {}))
-  ([_opts]
-   (reify p/Limiter
-     (-acquire! [_ current-limit in-flight extra]
-       (when (>= in-flight current-limit)
-         (throw (ex/ex-info "Request rejected"
-                            [:qbits.flex/rejected [:exoscale.ex/unavailable]]
-                            (merge {:limit current-limit
-                                    :current-in-flight in-flight}
-                                   extra)))))
-     (-acquire! [this current-limit in-flight]
-       (p/-acquire! this current-limit in-flight {})))))
+  [{:keys [clock sampler limit recorder]
+    :or {recorder (recorder/make)
+         clock (clock/make)
+         sampler (sampler/make)}}]
+
+  (reify p/Limiter
+    (-acquire! [this]
+      (let [current-limit @limit
+            in-flight (p/-inc! recorder)
+            time @clock]
+        (when (<= in-flight current-limit)
+          {:time time
+           :in-flight in-flight
+           :limit current-limit})))
+
+    (-complete! [this start-time]
+      (p/update! limit
+                 (p/sample! sampler
+                            (p/duration clock
+                                        start-time))
+                 (p/-dec! recorder)
+                 false))
+
+    (-ignore! [this]
+      (p/dec! recorder))
+
+    (-reject! [this]
+      (p/dec! recorder)
+      (p/update! limit
+                 @sampler
+                 @recorder
+                 true))
+
+    clojure.lang.IDeref
+    (deref [_]
+      {:in-flight @recorder
+       :limit @limit
+       :sample @sampler
+       :time @clock})))

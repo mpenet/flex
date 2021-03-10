@@ -5,39 +5,27 @@
 (defn interceptor
   "Interceptor of `limiter` and `sampler` that will compute rtt avg for
   handler and reject requests past limited threshold"
-  [{:keys [recorder sampler limiter limit clock]}]
+  [{:keys [limiter]}]
   {:enter (fn [{:as ctx}]
             ;; this could throw so current-in-flight will only inc
             ;; if not rejected
-            (p/acquire! limiter
-                        @limit
-                        @recorder
-                        {:limit limit
-                         :sampler sampler})
-            (assoc ctx
-                   ::current-in-flight (p/inc! recorder)
-                   ::start-time @clock))
+            (if-let [{:keys [time in-flight current-limit]} (p/acquire! limiter)]
+              (assoc ctx
+                     ::current-limit current-limit
+                     ::current-in-flight in-flight
+                     ::start-time time)
+              (do
+                ;; (p/ignore! limiter)
+                (throw (ex-info "Rejected" {})))))
 
    :leave (fn [{:as ctx ::keys [start-time]}]
-            (let [rtt-avg (p/sample! sampler
-                                     (p/duration clock start-time))]
-              (p/update! limit
-                         rtt-avg
-                         (p/dec! recorder)
-                         false))
+            (p/complete! limiter start-time)
             ctx)
 
    :error (fn [{::keys [start-time]} err]
             ;; only decrease if it's bubbling from a real ex (not rejection)
-            (if-not (ex/type? err :qbits.flex/rejected)
-              (p/update! limit
-                         (p/sample! sampler
-                                    (p/duration clock start-time))
-                         (p/dec! recorder)
-                         false)
+            (if start-time
+              (p/complete! limiter start-time)
               ;; just register the drop
-              (p/update! limit
-                         @sampler
-                         @recorder
-                         true))
+              (p/reject! limiter))
             (throw err))})

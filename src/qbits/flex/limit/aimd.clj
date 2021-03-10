@@ -1,12 +1,22 @@
 (ns qbits.flex.limit.aimd
+  "Implementation of AIMD Limit,
+  https://en.wikipedia.org/wiki/Additive_increase/multiplicative_decrease
+
+  By default it will increase by 1 on low avg rtt and backoff by 0.9
+  on elevated/ing latency, both functions of current limit are
+  modifiable via config"
   (:require [qbits.flex.protocols :as p]))
 
 (def defaults
   {::initial-limit 20
    ::min-limit 20
    ::max-limit 200
-   ::backoff-ratio 0.9
-   ::inc-after (fn [in-flight] (* 2 in-flight))
+   ::limit-dec (fn [limit] (long (* 0.9 limit)))
+   ::limit-inc inc
+   ::inc-condition (fn [limit in-flight]
+                     (>= (* 2 in-flight)
+                         limit))
+
    ;; 5s in ns
    ::timeout (* 5 1e9)})
 
@@ -14,40 +24,35 @@
   ([] (make {}))
   ([opts]
    (let [{:as _opts
-          ::keys [initial-limit backoff-ratio timeout max-limit min-limit
-                  inc-after]}
+          ::keys [initial-limit limit-dec limit-inc
+                  timeout max-limit min-limit
+                  inc-condition]}
          (merge defaults opts)
-         state (atom {:limit initial-limit})]
+         limit (atom initial-limit)]
      (reify
        clojure.lang.IDeref
-       (deref [_] (:limit @state))
+       (deref [_] @limit)
 
        p/Limit
-       (-state [_] @state)
+       (-state [_] @limit)
 
-       (-add-watch! [_ k f]
-         (add-watch state
+       (-watch-limit! [_ k f]
+         (add-watch limit
                     k
-                    (fn [_k _r
-                         {old-limit :limit}
-                         {new-limit :limit}]
-                      (when (not= old-limit
-                                  new-limit)
-                        (f new-limit)))))
+                    (fn [_k _r old new]
+                      (when (not= old new)
+                        (f new)))))
 
        (-update! [_ rtt in-flight dropped?]
-         (-> (swap! state
-                    (fn [{:keys [limit] :as state}]
-                      (assoc state
-                             :limit
-                             (let [limit (cond
-                                           (or dropped? (> rtt timeout))
-                                           (long (* limit backoff-ratio))
+         (swap! limit
+                (fn [limit-val]
+                  (->> (cond
+                         (or dropped? (> rtt timeout))
+                         (limit-dec limit-val)
 
-                                           (>= (inc-after in-flight) limit)
-                                           (inc limit)
+                         (inc-condition limit-val in-flight)
+                         (limit-inc limit-val)
 
-                                           :else limit)]
-                               (min max-limit
-                                    (max min-limit limit))))))
-             :limit))))))
+                         :else limit-val)
+                       (max min-limit)
+                       (min max-limit)))))))))

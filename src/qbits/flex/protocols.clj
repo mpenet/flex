@@ -1,15 +1,20 @@
 (ns qbits.flex.protocols
-  (:refer-clojure :exclude [add-watch!]))
+  (:refer-clojure :exclude [time]))
 
 (defprotocol Limit
   (-state [this])
-  (-add-watch! [this k f])
+  (-watch-limit! [this k f])
   (-update! [this rtt in-flight dropped?]))
 
 (defprotocol Limiter
-  (-acquire!
-    [this current-limit in-flight]
-    [this current-limit in-flight extra]))
+  (-acquire! [this])
+  (-complete! [this start-time])
+  (-reject! [this])
+  (-ignore! [this])
+
+  (-in-flight [this])
+  (-sample [this])
+  (-time [this]))
 
 (defprotocol Sampler
   (-sample! [this val] "Records avg rtts for context"))
@@ -23,9 +28,15 @@
 
 (def state -state)
 (def update! -update!)
-(def add-watch! -add-watch!)
+(def watch-limit! -watch-limit!)
 (def acquire! -acquire!)
 (def sample! -sample!)
 (def inc! -inc!)
 (def dec! -dec!)
 (def duration -duration)
+
+(def complete! -complete!)
+(def reject! -reject!)
+(def ignore! -ignore!)
+(def sample -sample)
+(def time -time)

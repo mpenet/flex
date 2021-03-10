@@ -1,25 +1,28 @@
 (ns qbits.flex.sampler.windowed
+  "Averaging sampler based on naive ring buffer"
   (:require [qbits.flex.protocols :as p]))
 
-;; simple sampler that records a moving window of rtt-length
-(def defaults {::length 100})
+(defn avg
+  [xs]
+  (if (seq xs)
+    (long (/ (reduce + 0 xs)
+             (count xs)))
+    0))
 
 (defn make
-  [{::keys [length initial]
-    :or {length 100
-         initial nil}}]
-  (let [state (atom {::val initial})]
-    (reify p/Sampler
-      (-sample! [_ val]
-        (-> (swap! state
-                   update
-                   ::val
-                   (fnil #(-> %
-                              (* (dec length))
-                              (+ val)
-                              (/ length)
-                              (long))
-                         val))
-            ::val))
-      clojure.lang.IDeref
-      (deref [_] (::val @state)))))
+  ([] (make {}))
+  ([{::keys [length]
+     :or {length 100}}]
+   (let [q (atom clojure.lang.PersistentQueue/EMPTY)]
+     (reify p/Sampler
+       (-sample! [_ rtt]
+         (-> (swap! q
+                    (fn [q-val]
+                      (conj (cond-> q-val
+                              (>= (count q-val) length)
+                              pop)
+                            rtt)))
+             avg))
+       clojure.lang.IDeref
+       (deref [_]
+         (avg @q))))))

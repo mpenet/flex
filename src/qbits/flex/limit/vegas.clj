@@ -13,8 +13,7 @@
   typically 4-6.  To allow for better growth and stability at higher
   limits we set alpha=Max(3, 10% of the current limit) and beta=Max(6,
   20% of the current limit)"
-  (:require [qbits.flex.protocols :as p]
-            [qbits.flex.limit.impl :as impl])
+  (:require [qbits.flex.protocols :as p])
   (:import (java.util.concurrent ThreadLocalRandom)))
 
 (defn- log10
@@ -24,23 +23,23 @@
 
 (defn alpha
   [limit]
-  (* 3 (impl/log10 (int limit))))
+  (* 3 (log10 (int limit))))
 
 (defn beta
   [limit]
-  (* 6 (impl/log10 (int limit))))
+  (* 6 (log10 (int limit))))
 
 (defn threshold
   [limit]
-  (* 6 (impl/log10 (int limit))))
+  (* 6 (log10 (int limit))))
 
-(defn inc-limit [limit]
+(defn limit-inc [limit]
   (+ (double limit)
-     (impl/log10 (int limit))))
+     (log10 (int limit))))
 
-(defn dec-limit [limit]
+(defn limit-dec [limit]
   (- (double limit)
-     (impl/log10 (int limit))))
+     (log10 (int limit))))
 
 (defn probe?
   [limit probe-count jitter probe-multiplier]
@@ -59,7 +58,7 @@
   (cond
     ;; Treat any drop (i.e timeout) as needing to reduce the limit
     dropped?
-    (smoothed-limit (dec-limit limit)
+    (smoothed-limit (limit-dec limit)
                     max-limit
                     smoothing
                     limit)
@@ -80,11 +79,11 @@
 
                       ;; Increase the limit if queue is still manageable
                       (< (alpha limit) queue-size)
-                      (inc-limit limit)
+                      (limit-inc limit)
 
                       ;; Detecting latency so decrease
                       (> queue-size beta-limit)
-                      (dec-limit limit))]
+                      (limit-dec limit))]
       (if new-limit
         (smoothed-limit new-limit
                         max-limit
@@ -97,8 +96,6 @@
    ::max-limit 1000
    ::probe-multiplier 30
    ::smoothing 1.0})
-
-
 
 (defn make
   [opts]
@@ -117,8 +114,8 @@
 
       p/Limit
       (-state [_] @state)
-      (-add-watch! [_ k f]
-        (add-watch atm
+      (-watch-limit! [_ k f]
+        (add-watch state
                    k
                    (fn [_k _r
                         {old-limit :limit}
@@ -132,15 +129,15 @@
                    #(fn [{:keys [limit rtt-no-load probe-count probe-jitter]}]
                       (let [probe-count (inc probe-count)]
                         (condp
-                            (probe? limit
-                                    probe-count
-                                    probe-jitter
-                                    probe-multiplier)
-                            (assoc %
-                                   :probe-jitter (-> (ThreadLocalRandom/current)
-                                                     (.nextDouble 0.5 1))
-                                   :probe-count 0
-                                   :rtt-no-load rtt)
+                         (probe? limit
+                                 probe-count
+                                 probe-jitter
+                                 probe-multiplier)
+                         (assoc %
+                                :probe-jitter (-> (ThreadLocalRandom/current)
+                                                  (.nextDouble 0.5 1))
+                                :probe-count 0
+                                :rtt-no-load rtt)
 
                           (or (zero? (:rtt-no-load %))
                               (> rtt (:rtt-no-load %)))

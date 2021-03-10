@@ -10,6 +10,6 @@
     (deref [_] limit)
     p/Limit
     (-state [_] {:limit limit})
-    (-add-watch! [_ k f])
+    (-watch-limit! [_ k f])
     (-update! [_ rtt in-flight dropped?]
       limit)))

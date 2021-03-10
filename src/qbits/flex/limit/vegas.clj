@@ -1,7 +1,10 @@
 (ns qbits.flex.limit.vegas
-  "Limiter based on TCP Vegas where the limit increases by alpha if the queue_use
-  is small ({@literal <} alpha) and decreases by alpha if the queue_use is large
-  ({@literal >} beta).
+  "Implementation adapted from netflix/concurrency-limits
+  https://github.com/Netflix/concurrency-limits/blob/master/LICENSE
+
+  Limiter based on TCP Vegas where the limit increases by alpha if the queue_use
+  is small (l < alpha) and decreases by alpha if the queue_use is large
+  (l > beta).
 
   Queue size is calculated using the formula,
   queue_use = limit − BWE×RTTnoLoad = limit × (1 − RTTnoLoad/RTTactual)

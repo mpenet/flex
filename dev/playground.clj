@@ -39,7 +39,7 @@
                 (assoc rejected-response
                        :body (format "Enhance your calm - %s"
                                      (pr-str {:limit @limit
-                                              :sample (format "%sms" (/ @sampler 1e6))})))
+                                              :sample (format "%sms" (some-> @sampler (/ 1e6)))})))
                 {:status 500
                  :body "boom"}))
      :leave :response}
@@ -52,7 +52,10 @@
                      {:status 200
                       :body (str {:limit @limit
                                   :in-flight current-in-flight
-                                  :sampler (format "%sms" (/ @sampler 1e6))})}))}]))
+                                  :sampler (when @sampler
+                                             (format "%sms"
+                                                     (some-> @sampler
+                                                             (/ 1e6))))})}))}]))
 
 ;; (.stop server)
 (def server

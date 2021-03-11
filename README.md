@@ -1,6 +1,6 @@
 # flex
 
-![icon by https://thenounproject.com/ivankostriukov/](flex.png){:height="70%" width="70%"}
+<img src="flex.png" width="133" height="133" alt="icon by https://thenounproject.com/ivankostriukov/"/>
 
 **WIP**
 

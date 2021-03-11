@@ -1,0 +1,13 @@
+{:deps {org.clojure/clojure {:mvn/version "1.10.2"}
+        exoscale/ex {:mvn/version "0.3.17"}
+        exoscale/interceptor {:mvn/version "0.1.9"}}
+
+ :aliases
+ {:dev {:extra-deps {ring/ring {:mvn/version "1.9.1"}}}
+
+  :test {:extra-paths ["test"]
+         :extra-deps {org.clojure/test.check {:mvn/version "RELEASE"}
+                      com.cognitect/test-runner
+                      {:git/url "https://github.com/cognitect-labs/test-runner"
+                       :sha "b6b3193fcc42659d7e46ecd1884a228993441182"}}
+         :main-opts ["-m" "cognitect.test-runner"]}}}

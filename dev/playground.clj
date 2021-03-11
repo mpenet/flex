@@ -2,46 +2,44 @@
   (:require [ring.adapter.jetty :as j]
             [exoscale.ex :as ex]
             [qbits.flex.limit.aimd :as limit]
-            [qbits.flex.limiter.simple :as limiter]
+            [qbits.flex :as f]
             [qbits.flex.interceptor :as ix]
             [qbits.flex.middleware]
             [exoscale.interceptor]))
 
-(def ok-response {:status 200
-                  :body "Ok"})
+(defn ok-response [s]
+  {:status 200
+   :body (pr-str s)})
 
-(def rejected-response {:status 420
-                        :body "Enhance your calm"})
+(defn rejected-response [s]
+  {:status 420
+   :body (format "Enhance your calm - %s" (pr-str s))})
 
 (def limit (qbits.flex.limit.aimd/make
-            #:qbits.flex.limit.aimd{:initial-limit 20
-                                    :max-limit 30
-                                    :min-limit 3}))
+            {:initial-limit 1
+             :max-limit 3
+             :min-limit 1}))
 
-(def limiter (limiter/make {:limit limit}))
-
+(def limiter (f/limiter {:limit limit}))
 (def ix (ix/interceptor {:limiter limiter}))
 
 (defn interceptor-handler [request]
   (exoscale.interceptor/execute
    {:request request}
    [{:error (fn [_ctx err]
-              (if (instance? clojure.lang.ExceptionInfo err)
-                (assoc rejected-response
-                       :body (format "Enhance your calm - %s"
-                                     (pr-str @limiter)))
+              (if (ex/type? err :qbits.flex/rejected)
+                (rejected-response @limiter)
                 {:status 500
-                 :body "boom"}))
+                 :body (str "boom -" err)}))
 
      :leave :response}
 
     #'ix
-    {:enter (fn [{:as ctx ::ix/keys [current-in-flight]}]
-              (Thread/sleep (rand-int 3000))
+    {:enter (fn [ctx]
+              (Thread/sleep (rand-int 1000))
               (assoc ctx
                      :response
-                     {:status 200
-                      :body (str @limiter)}))}]))
+                     (ok-response @limiter)))}]))
 
 
 (defn server+interceptor
@@ -54,7 +52,10 @@
   (j/run-jetty (qbits.flex.middleware/with-limiter
                  (fn [_]
                    (Thread/sleep (rand-int 5000))
-                   ok-response)
+                   (ex/try+
+                     (ok-response @limiter)
+                     (catch :qbits.flex/rejected e
+                       (rejected-response @limiter))))
                  {:limiter limiter})
                {:port 8080
                 :join? false}))

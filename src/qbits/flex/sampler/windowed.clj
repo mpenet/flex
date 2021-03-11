@@ -12,7 +12,7 @@
 (defn make
   ([] (make {}))
   ([{::keys [length]
-     :or {length 100}}]
+     :or {length 25}}]
    (let [q (atom clojure.lang.PersistentQueue/EMPTY)]
      (reify p/Sampler
        (-sample! [_ rtt]

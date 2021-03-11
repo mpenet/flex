@@ -8,25 +8,25 @@
   (:require [qbits.flex.protocols :as p]))
 
 (def defaults
-  {::initial-limit 20
-   ::min-limit 20
-   ::max-limit 200
-   ::limit-dec (fn [limit] (long (* 0.9 limit)))
-   ::limit-inc inc
-   ::inc-condition (fn [limit in-flight]
-                     (>= (* 2 in-flight)
-                         limit))
+  {:initial-limit 20
+   :min-limit 20
+   :max-limit 200
+   :limit-dec (fn [limit] (long (* 0.9 limit)))
+   :limit-inc inc
+   :inc-condition (fn [limit in-flight]
+                    (>= (* 2 in-flight)
+                        limit))
 
    ;; 5s in ns
-   ::timeout (* 5 1e9)})
+   :timeout (* 5 1e9)})
 
 (defn make
   ([] (make {}))
   ([opts]
    (let [{:as _opts
-          ::keys [initial-limit limit-dec limit-inc
-                  timeout max-limit min-limit
-                  inc-condition]}
+          :keys [initial-limit limit-dec limit-inc
+                 timeout max-limit min-limit
+                 inc-condition]}
          (merge defaults opts)
          limit (atom initial-limit)]
      (reify

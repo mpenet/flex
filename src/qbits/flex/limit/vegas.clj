@@ -92,16 +92,16 @@
         limit))))
 
 (def defaults
-  {::initial-limit 20
-   ::max-limit 1000
-   ::probe-multiplier 30
-   ::smoothing 1.0})
+  {:initial-limit 20
+   :max-limit 1000
+   :probe-multiplier 30
+   :smoothing 1.0})
 
 (defn make
   [opts]
   (let [{:as _opts
-         ::keys [initial-limit max-limit probe-multiplier
-                 in-flight rtt smoothing]}
+         :keys [initial-limit max-limit probe-multiplier
+                in-flight rtt smoothing]}
         (merge defaults opts)
         state (atom {:limit initial-limit
                      :probe-count 0
@@ -129,15 +129,15 @@
                    #(fn [{:keys [limit rtt-no-load probe-count probe-jitter]}]
                       (let [probe-count (inc probe-count)]
                         (condp
-                         (probe? limit
-                                 probe-count
-                                 probe-jitter
-                                 probe-multiplier)
-                         (assoc %
-                                :probe-jitter (-> (ThreadLocalRandom/current)
-                                                  (.nextDouble 0.5 1))
-                                :probe-count 0
-                                :rtt-no-load rtt)
+                            (probe? limit
+                                    probe-count
+                                    probe-jitter
+                                    probe-multiplier)
+                            (assoc %
+                                   :probe-jitter (-> (ThreadLocalRandom/current)
+                                                     (.nextDouble 0.5 1))
+                                   :probe-count 0
+                                   :rtt-no-load rtt)
 
                           (or (zero? (:rtt-no-load %))
                               (> rtt (:rtt-no-load %)))

@@ -128,16 +128,16 @@
         (-> (swap! state
                    #(fn [{:keys [limit rtt-no-load probe-count probe-jitter]}]
                       (let [probe-count (inc probe-count)]
-                        (condp
-                            (probe? limit
-                                    probe-count
-                                    probe-jitter
-                                    probe-multiplier)
-                            (assoc %
-                                   :probe-jitter (-> (ThreadLocalRandom/current)
-                                                     (.nextDouble 0.5 1))
-                                   :probe-count 0
-                                   :rtt-no-load rtt)
+                        (cond
+                          (probe? limit
+                                  probe-count
+                                  probe-jitter
+                                  probe-multiplier)
+                          (assoc %
+                                 :probe-jitter (-> (ThreadLocalRandom/current)
+                                                   (.nextDouble 0.5 1))
+                                 :probe-count 0
+                                 :rtt-no-load rtt)
 
                           (or (zero? (:rtt-no-load %))
                               (> rtt (:rtt-no-load %)))

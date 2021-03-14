@@ -126,29 +126,29 @@
 
       (-update! [_ rtt in-flight dropped?]
         (-> (swap! state
-                   #(fn [{:keys [limit rtt-no-load probe-count probe-jitter]}]
-                      (let [probe-count (inc probe-count)]
-                        (cond
-                          (probe? limit
-                                  probe-count
-                                  probe-jitter
-                                  probe-multiplier)
-                          (assoc %
-                                 :probe-jitter (-> (ThreadLocalRandom/current)
-                                                   (.nextDouble 0.5 1))
-                                 :probe-count 0
-                                 :rtt-no-load rtt)
+                   (fn [{:keys [limit rtt-no-load probe-count probe-jitter] :as state-val}]
+                     (let [probe-count (inc probe-count)]
+                       (cond
+                         (probe? limit
+                                 probe-count
+                                 probe-jitter
+                                 probe-multiplier)
+                         (assoc state-val
+                                :probe-jitter (-> (ThreadLocalRandom/current)
+                                                  (.nextDouble 0.5 1))
+                                :probe-count 0
+                                :rtt-no-load rtt)
 
-                          (or (zero? (:rtt-no-load %))
-                              (> rtt (:rtt-no-load %)))
-                          (assoc %
-                                 :probe-count probe-count
-                                 :rtt-no-load rtt)
+                         (or (zero? rtt-no-load )
+                             (> rtt rtt-no-load))
+                         (assoc state-val
+                                :probe-count probe-count
+                                :rtt-no-load rtt)
 
-                          :else
-                          (assoc %
-                                 :probe-count probe-count
-                                 :limit (estimated-limit limit rtt-no-load
-                                                         max-limit smoothing rtt
-                                                         in-flight dropped?))))))
+                         :else
+                         (assoc state-val
+                                :probe-count probe-count
+                                :limit (estimated-limit limit rtt-no-load
+                                                        max-limit smoothing rtt
+                                                        in-flight dropped?))))))
             :limit)))))

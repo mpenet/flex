@@ -23,17 +23,17 @@
      (deref [_] (System/nanoTime)))))
 
 (defn request
-  [clock sampler recorder limit ; deps
-   accept hooks]
+  [{:keys [clock sampler recorder limit ; deps
+           accept]
+    :as limiter}]
   (let [in-flight (p/-inc! recorder)
         current-limit @limit
         start-time @clock
         accepted (accept in-flight current-limit)
-        status (promise)
         {:qbits.flex.hooks/keys [complete ignore drop]
          :or {complete identity
               ignore identity
-              drop identity}} hooks]
+              drop identity}} limiter]
     (reify p/Request
       (-accepted? [_] accepted)
       (-rejected? [_] (not accepted))
@@ -46,13 +46,11 @@
                                           start-time))
                    in-flight
                    false)
-        (complete this)
-        (deliver status ::completed))
+        (complete this))
 
       (-ignore! [this]
         (p/dec! recorder)
-        (ignore this)
-        (deliver status ::ignored))
+        (ignore this))
 
       (-drop! [this]
         (p/dec! recorder)
@@ -60,8 +58,7 @@
                    @sampler
                    in-flight
                    true)
-        (drop this)
-        (deliver status ::dropped))
+        (drop this))
 
       clojure.lang.IDeref
       (deref [_]
@@ -70,27 +67,37 @@
          ::accepted? accepted
          ::sample @sampler}))))
 
-(defn limiter
-  [{:keys [clock sampler limit recorder accept hooks]
-    :or {recorder (recorder)
-         clock (clock)
-         sampler (sampler/make)
-         accept (fn [in-flight current-limit]
-                  (<= in-flight current-limit))}}]
-  (reify p/Limiter
-    (-acquire! [this]
-      (request clock
-               sampler
-               recorder
-               limit
-               accept
-               hooks))
+(defn- limiter-defaults
+  [{:keys [clock sampler _limit recorder accept] :as opts}]
+  (cond-> opts
+    (not recorder)
+    (assoc :recorder (qbits.flex/recorder))
 
-    clojure.lang.IDeref
-    (deref [_]
-      {:in-flight @recorder
-       :limit @limit
-       :sample @sampler})))
+    (not sampler)
+    (assoc :sampler (sampler/make))
+
+    (not clock)
+    (assoc :clock (qbits.flex/clock))
+
+    (not accept)
+    (assoc :accept
+           (fn [in-flight current-limit]
+             (<= in-flight current-limit)))))
+
+(defrecord Limiter [clock sampler limit recorder accept hooks]
+  p/Limiter
+  (-acquire! [this]
+    (request this))
+
+  clojure.lang.IDeref
+  (deref [_]
+    {:in-flight @recorder
+     :limit @limit
+     :sample @sampler}))
+
+(defn limiter
+  [{:keys [clock sampler limit recorder accept] :as opts}]
+  (map->Limiter (limiter-defaults opts)))
 
 (defn quota-limiter
   "Like `limiter` but will limit the requests to :quota, defaults to

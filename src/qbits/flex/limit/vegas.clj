@@ -74,7 +74,7 @@
                                               rtt)))))
           new-limit (cond
                       ;; Aggressive increase when no queuing
-                      (<= queue-size threshold)
+                      (<= queue-size (threshold limit))
                       (+ beta-limit limit)
 
                       ;; Increase the limit if queue is still manageable

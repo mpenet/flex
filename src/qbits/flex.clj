@@ -5,7 +5,7 @@
 
 (defn recorder
   ([] (recorder {}))
-  ([{::keys [initial]
+  ([{:keys [initial]
      :or {initial 0}}]
    (let [atm (AtomicLong. initial)]
      (reify p/Recorder
@@ -68,7 +68,7 @@
          ::sample @sampler}))))
 
 (defn- limiter-defaults
-  [{:keys [clock sampler _limit recorder accept] :as opts}]
+  [{:keys [clock sampler limit recorder accept] :as opts}]
   (cond-> opts
     (not recorder)
     (assoc :recorder (qbits.flex/recorder))

@@ -48,7 +48,6 @@
                  min-limit max-limit exp-avg-measurement]} (merge defaults opts)
          state (atom {:limit initial-limit
                       :exp-avg-measurement exp-avg-measurement})]
-     (prn @state)
      (reify
        clojure.lang.IDeref
        (deref [_] (:limit @state))

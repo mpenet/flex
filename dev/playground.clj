@@ -2,6 +2,8 @@
   (:require [ring.adapter.jetty :as j]
             [exoscale.ex :as ex]
             [qbits.flex.limit.aimd :as limit]
+            [qbits.flex.limit.vegas :as vlimit :reload :all]
+            [qbits.flex.limit.gradient2 :as gradient2 :reload :all]
             [qbits.flex :as f]
             [qbits.flex.interceptor :as ix]
             [qbits.flex.middleware]
@@ -19,6 +21,15 @@
             {:initial-limit 1
              :max-limit 3
              :min-limit 1}))
+
+;; (def limit (qbits.flex.limit.vegas/make
+;;             {:initial-limit 1
+;;              :max-limit 5}))
+
+;; (def limit (qbits.flex.limit.gradient2/make
+;;             {:initial-limit 3
+;;              :min-limit 1
+;;              :max-limit 5}))
 
 (def limiter (f/limiter {:limit limit}))
 (def ix (ix/interceptor {:limiter limiter}))
@@ -60,6 +71,6 @@
                {:port 8080
                 :join? false}))
 
-;; (declare server)
-;; (try (.stop server) (catch Exception _ :boom))
-;; (def server (server+interceptor))
+(declare server)
+(try (.stop server) (catch Exception _ :boom))
+(def server (server+interceptor))

@@ -4,12 +4,13 @@
 (def defaults {:limit 20})
 
 (defn make
-  [{:as _opts ::keys [limit]}]
-  (reify
-    clojure.lang.IDeref
-    (deref [_] limit)
-    p/Limit
-    (-state [_] {:limit limit})
-    (-watch-limit! [_ k f])
-    (-update! [_ rtt in-flight dropped?]
-      limit)))
+  [opts]
+  (let [{::keys [limit]} (merge defaults opts)]
+    (reify
+      clojure.lang.IDeref
+      (deref [_] limit)
+      p/Limit
+      (-state [_] {:limit limit})
+      (-watch-limit! [_ k f])
+      (-update! [_ rtt in-flight dropped?]
+        limit))))

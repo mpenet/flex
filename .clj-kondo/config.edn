@@ -1,0 +1,15 @@
+{:linters
+ {:clojure-lsp/unused-public-var
+  {:level :warning
+   :exclude #{qbits.flex/quota-limiter
+              qbits.flex.limit.fixed/make
+              qbits.flex.limit.aimd/make
+              qbits.flex.limit.gradient2/make
+              qbits.flex.limit.vegas/make
+              qbits.flex.protocols/state
+              qbits.flex.protocols/watch-limit!
+              qbits.flex.protocols/ignore!
+              qbits.flex.protocols/inc!
+              qbits.flex.protocols/rejected?
+              qbits.flex.interceptor/interceptor
+              qbits.flex.middleware/with-limiter}}}}

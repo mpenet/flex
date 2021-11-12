@@ -139,7 +139,7 @@
                                 :probe-count 0
                                 :rtt-no-load rtt)
 
-                         (or (zero? rtt-no-load )
+                         (or (zero? rtt-no-load)
                              (> rtt rtt-no-load))
                          (assoc state-val
                                 :probe-count probe-count

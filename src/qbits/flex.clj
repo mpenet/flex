@@ -68,7 +68,7 @@
          ::sample @sampler}))))
 
 (defn- limiter-defaults
-  [{:keys [clock sampler limit recorder accept] :as opts}]
+  [{:keys [clock sampler _limit recorder accept] :as opts}]
   (cond-> opts
     (not recorder)
     (assoc :recorder (qbits.flex/recorder))
@@ -96,7 +96,7 @@
      :sample @sampler}))
 
 (defn limiter
-  [{:keys [clock sampler limit recorder accept] :as opts}]
+  [{:keys [_clock _sampler _limit _recorder _accept] :as opts}]
   (map->Limiter (limiter-defaults opts)))
 
 (defn quota-limiter

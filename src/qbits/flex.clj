@@ -18,9 +18,9 @@
   ([] (clock {}))
   ([_opts]
    (reify p/Clock
-     (-duration [_ t] (- (System/nanoTime) t))
+     (-duration [_ t] (- (System/currentTimeMillis) t))
      clojure.lang.IDeref
-     (deref [_] (System/nanoTime)))))
+     (deref [_] (System/currentTimeMillis)))))
 
 (defn request
   [{:keys [clock sampler recorder limit ; deps

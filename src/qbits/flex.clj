@@ -26,26 +26,28 @@
   [{:keys [clock sampler recorder limit ; deps
            accept]
     :as limiter}]
-  (let [in-flight (p/-inc! recorder)
-        current-limit @limit
+  (let [current-limit @limit
+        in-flight (p/-inc! recorder)
         start-time @clock
         accepted (accept in-flight current-limit)
         {:qbits.flex.hooks/keys [complete ignore drop]
          :or {complete identity
               ignore identity
               drop identity}} limiter]
+
     (reify p/Request
       (-accepted? [_] accepted)
       (-rejected? [_] (not accepted))
 
       (-complete! [this]
+        (let [rtt (p/duration clock
+                              start-time)]
+          (p/update! limit
+                     (p/sample! sampler rtt)
+                     rtt
+                     @recorder
+                     false))
         (p/-dec! recorder)
-        (p/update! limit
-                   (p/sample! sampler
-                              (p/duration clock
-                                          start-time))
-                   in-flight
-                   false)
         (complete this))
 
       (-ignore! [this]
@@ -53,11 +55,12 @@
         (ignore this))
 
       (-drop! [this]
+        ;; (p/update! limit
+        ;;            nil ;; no need to compute current rtt, it's a drop
+        ;;            nil
+        ;;            @recorder
+        ;;            true)
         (p/dec! recorder)
-        (p/update! limit
-                   @sampler
-                   in-flight
-                   true)
         (drop this))
 
       clojure.lang.IDeref
@@ -82,6 +85,7 @@
     (not accept)
     (assoc :accept
            (fn [in-flight current-limit]
+             ;; (tap> [in-flight current-limit])
              (<= in-flight current-limit)))))
 
 (defrecord Limiter [clock sampler limit recorder accept hooks]

@@ -9,24 +9,25 @@
 
 (def defaults
   {:initial-limit 20
+   :dec-by 0.98
    :min-limit 20
    :max-limit 200
-   :limit-dec (fn [limit] (long (* 0.9 limit)))
-   :limit-inc inc
-   :inc-condition (fn [limit in-flight]
-                    (>= (* 2 in-flight)
-                        limit))
-
+   :inc-limit inc
    ;; 5s in ns
    :timeout (* 5 1e9)})
+
+(defn- within-range
+  [x min-limit max-limit]
+  (-> x
+      (min max-limit)
+      (max min-limit)))
 
 (defn make
   ([] (make {}))
   ([opts]
    (let [{:as _opts
-          :keys [initial-limit limit-dec limit-inc
-                 timeout max-limit min-limit
-                 inc-condition]}
+          :keys [initial-limit inc-limit dec-by
+                 timeout max-limit min-limit]}
          (merge defaults opts)
          limit (atom initial-limit)]
      (reify
@@ -43,16 +44,19 @@
                       (when (not= old new)
                         (f new)))))
 
-       (-update! [_ rtt in-flight dropped?]
-         (swap! limit
-                (fn [limit-val]
-                  (->> (cond
-                         (or dropped? (> rtt timeout))
-                         (limit-dec limit-val)
+       (-update! [_ rtt-avgs rtt in-flight dropped?]
+         (let [[old-rtt new-rtt] rtt-avgs]
+           (swap! limit
+                  (fn [limit-val]
+                    (-> (cond
+                          ;; faulty or timeout or new avg rtt too large
+                          ;; -> decrease limit
+                          (or dropped?
+                              (> new-rtt timeout)
+                              (> new-rtt old-rtt))
+                          (long (* dec-by limit-val))
 
-                         (inc-condition limit-val in-flight)
-                         (limit-inc limit-val)
-
-                         :else limit-val)
-                       (max min-limit)
-                       (min max-limit)))))))))
+                          ;; happy path, we can increase limits
+                          :else
+                          (inc-limit limit-val))
+                        (within-range min-limit max-limit))))))))))

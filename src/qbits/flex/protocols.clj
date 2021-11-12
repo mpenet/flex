@@ -6,7 +6,7 @@
     "Returns limit current state")
   (-watch-limit! [this k f]
     "Adds watch `f` on limit changes for key `k`")
-  (-update! [this rtt in-flight dropped?]
+  (-update! [this rtt-avgs rtt in-flight dropped?]
     "Updates limit state for current request `rtt`, number of `in-flight` requests and potentially `dropped?` status"))
 
 (defprotocol Limiter

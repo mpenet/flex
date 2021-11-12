@@ -16,13 +16,13 @@
    (let [q (atom clojure.lang.PersistentQueue/EMPTY)]
      (reify p/Sampler
        (-sample! [_ rtt]
-         (-> (swap! q
-                    (fn [q-val]
-                      (conj (cond-> q-val
-                              (>= (count q-val) length)
-                              pop)
-                            rtt)))
-             avg))
+         (->> (swap-vals! q
+                          (fn [q-val]
+                            (conj (cond-> q-val
+                                    (>= (count q-val) length)
+                                    pop)
+                                  rtt)))
+              (map avg)))
        clojure.lang.IDeref
        (deref [_]
          (avg @q))))))

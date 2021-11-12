@@ -2,12 +2,14 @@
   (:require [ring.adapter.jetty :as j]
             [exoscale.ex :as ex]
             [qbits.flex.limit.aimd :as limit]
-            [qbits.flex.limit.vegas :as vlimit :reload :all]
-            [qbits.flex.limit.gradient2 :as gradient2 :reload :all]
             [qbits.flex :as f]
             [qbits.flex.interceptor :as ix]
             [qbits.flex.middleware]
             [exoscale.interceptor]))
+
+;; (def tf (bound-fn* println))
+;; (remove-tap tf)
+;; (add-tap tf)
 
 (defn ok-response [s]
   {:status 200
@@ -15,21 +17,12 @@
 
 (defn rejected-response [s]
   {:status 420
-   :body (format "Enhance your calm - %s" (pr-str s))})
+   :body (format "Enhance your calm - %s" (ex-message s))})
 
 (def limit (qbits.flex.limit.aimd/make
-            {:initial-limit 1
-             :max-limit 3
+            {:initial-limit 30
+             :max-limit 1000
              :min-limit 1}))
-
-;; (def limit (qbits.flex.limit.vegas/make
-;;             {:initial-limit 1
-;;              :max-limit 5}))
-
-;; (def limit (qbits.flex.limit.gradient2/make
-;;             {:initial-limit 3
-;;              :min-limit 1
-;;              :max-limit 5}))
 
 (def limiter (f/limiter {:limit limit}))
 (def ix (ix/interceptor {:limiter limiter}))
@@ -59,18 +52,25 @@
                {:port 8080
                 :join? false}))
 
+(def resp-time (atom 500))
+
 (defn server+middleware []
-  (j/run-jetty (qbits.flex.middleware/with-limiter
-                 (fn [_]
-                   (Thread/sleep (rand-int 5000))
-                   (ex/try+
-                     (ok-response @limiter)
-                     (catch :qbits.flex/rejected e
-                       (rejected-response @limiter))))
-                 {:limiter limiter})
-               {:port 8080
-                :join? false}))
+  (let [handler (qbits.flex.middleware/with-limiter
+                  (fn [_]
+                    (Thread/sleep
+                     500 ; simulate stable
+                     ;; (max 1 (swap! resp-time inc)) ; simulate slowing down
+                     ;; (max 1 (swap! resp-time dec)) ; simulate faster resp times
+                     )
+                    (ok-response @limiter))
+                  {:limiter limiter})]
+    (j/run-jetty (fn [request]
+                   (ex/try+ (handler request)
+                            (catch :qbits.flex/rejected _
+                              (rejected-response @limiter))))
+                 {:port 8080
+                  :join? false})))
 
 (declare server)
 (try (.stop server) (catch Exception _ :boom))
-(def server (server+interceptor))
+(def server (server+middleware))

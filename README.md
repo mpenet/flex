@@ -16,12 +16,9 @@ concurrency according to the limit algo specified.
 A typical setup is composed of :
 
 * a *Limit*: defines how limit evolve from RTT averages, dropped
-  requests, timeout. Flex has both
-  additive-increase/multiplicative-decrease (AIMD), TCP Vegas
-  implementations for now (Vegas is an adaptation of the
-  implementation in https://github.com/Netflix/concurrency-limits) and
-  a Gradient based implementation. The AIMD implementation is the one
-  we recommend using initially.
+  requests, timeout. Flex has an
+  additive-increase/multiplicative-decrease (AIMD) implementation
+  right now.
 
 * a *Limiter* : responsible to handle attempt of acquisition of
   permission to proceed from current `Limit` and the current in-flight

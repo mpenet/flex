@@ -34,12 +34,12 @@
                             (Thread/sleep decay-interval)))]
      (reify p/Sampler
        (-sample! [_ rtt]
-         (-> (swap! q
-                    (fn [q-val]
-                      (conj (cond-> q-val
-                              (>= (count q-val) length)
-                              pop)
-                            [(System/currentTimeMillis) rtt])))
+         (-> (swap-vals! q
+                         (fn [q-val]
+                           (conj (cond-> q-val
+                                   (>= (count q-val) length)
+                                   pop)
+                                 [(System/currentTimeMillis) rtt])))
              avg))
        clojure.lang.IDeref
        (deref [_]

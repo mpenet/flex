@@ -15,7 +15,6 @@
              (count xs)))
     0))
 
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn make
   ([] (make {}))
   ([{::keys [length ttl decay-interval]

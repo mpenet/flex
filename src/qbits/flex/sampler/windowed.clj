@@ -25,9 +25,9 @@
 (defn make
   ([] (make {}))
   ([{::keys [length averaging-f]
-     :or {length 25
+     :or {length 100
           averaging-f #(avg %)}}]
-   (let [q (atom clojure.lang.PersistentQueue/EMPTY)]
+   (let [q (atom [])]
      (reify p/Sampler
        (-sample! [_ rtt]
          (->> (swap-vals! q

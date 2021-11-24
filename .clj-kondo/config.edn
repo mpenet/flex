@@ -12,5 +12,4 @@
               qbits.flex.protocols/inc!
               qbits.flex.protocols/rejected?
               qbits.flex.interceptor/interceptor
-              qbits.flex.middleware/with-limiter
-              qbits.flex.sampler.decaying/make}}}}
+              qbits.flex.middleware/with-limiter}}}}

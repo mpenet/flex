@@ -9,10 +9,24 @@
              (count xs)))
     0))
 
+(defn ewma
+  "Exponentially-weighted moving average"
+  [xs a]
+  (-> (reduce (fn [xs x]
+                (conj xs
+                      (+ (* a x)
+                         (* (- 1 a)
+                            (peek xs)))))
+              [(first xs)]
+              (rest xs))
+      peek
+      (or 0)))
+
 (defn make
   ([] (make {}))
-  ([{::keys [length]
-     :or {length 25}}]
+  ([{::keys [length averaging-f]
+     :or {length 25
+          averaging-f #(avg %)}}]
    (let [q (atom clojure.lang.PersistentQueue/EMPTY)]
      (reify p/Sampler
        (-sample! [_ rtt]
@@ -22,7 +36,7 @@
                                     (>= (count q-val) length)
                                     pop)
                                   rtt)))
-              (map avg)))
+              (map averaging-f)))
        clojure.lang.IDeref
        (deref [_]
-         (avg @q))))))
+         (averaging-f @q))))))

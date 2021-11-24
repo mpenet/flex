@@ -9,12 +9,12 @@
 
 (def defaults
   {:initial-limit 20
+   ;; :round-fn (fn [rtt-avg] (*))
    :dec-by 0.98
    :min-limit 20
    :max-limit 200
    :inc-limit inc
-   ;; 5s in ns
-   :timeout (* 5 1e9)})
+   :timeout 5000})
 
 (defn- within-range
   [x min-limit max-limit]
@@ -44,19 +44,10 @@
                       (when (not= old new)
                         (f new)))))
 
-       (-update! [_ rtt-avgs rtt in-flight dropped?]
-         (let [[old-rtt new-rtt] rtt-avgs]
-           (swap! limit
-                  (fn [limit-val]
-                    (-> (cond
-                          ;; faulty or timeout or new avg rtt too large
-                          ;; -> decrease limit
-                          (or dropped?
-                              (> new-rtt timeout)
-                              (> new-rtt old-rtt))
-                          (long (* dec-by limit-val))
-
-                          ;; happy path, we can increase limits
-                          :else
-                          (inc-limit limit-val))
-                        (within-range min-limit max-limit))))))))))
+       (-update! [_ rtt in-flight dropped?]
+         (swap! limit
+                (fn [limit-val]
+                  (-> (if (or dropped? (> rtt timeout))
+                        (long (* dec-by limit-val))
+                        (inc-limit limit-val))
+                      (within-range min-limit max-limit)))))))))

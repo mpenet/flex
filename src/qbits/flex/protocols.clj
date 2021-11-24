@@ -6,7 +6,7 @@
     "Returns limit current state")
   (-watch-limit! [this k f]
     "Adds watch `f` on limit changes for key `k`")
-  (-update! [this rtt-avgs rtt in-flight dropped?]
+  (-update! [this rtt in-flight dropped?]
     "Updates limit state for current request `rtt`, number of `in-flight` requests and potentially `dropped?` status"))
 
 (defprotocol Limiter
@@ -14,15 +14,13 @@
 
 (defprotocol Request
   (-accepted? [this] "Returns true if the requests was accepted")
-  (-rejected? [this] "Returns true if the requests was rejected")
   (-complete! [this] "Mark the current request as complete, updates sample/limit")
-  (-drop! [this] "Marks the request as dropped, updates sample/limit")
-  (-ignore! [this] "Marks the request as ignored"))
+  (-reject! [this] "Marks the request as rejectd"))
 
 (defprotocol Sampler
   (-sample! [this val] "Records avg rtts for context"))
 
-(defprotocol Recorder
+(defprotocol Counter
   (-inc! [this] "Increases in-flight requests count")
   (-dec! [this] "Decreases in-flight requests count"))
 
@@ -40,7 +38,5 @@
 (def duration -duration)
 
 (def complete! -complete!)
-(def drop! -drop!)
-(def ignore! -ignore!)
+(def reject! -reject!)
 (def accepted? -accepted?)
-(def rejected? -rejected?)

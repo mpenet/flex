@@ -21,5 +21,5 @@
    :error (fn [{:qbits.flex/keys [request]} err]
             (if (p/accepted? request)
               (p/complete! request)
-              (p/drop! request))
+              (p/reject! request))
             (throw err))})

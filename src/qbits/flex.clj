@@ -1,67 +1,58 @@
 (ns qbits.flex
   (:require [qbits.flex.protocols :as p]
+            [qbits.flex.limit.aimd :as aimd]
             [qbits.flex.sampler.windowed :as sampler])
   (:import (java.util.concurrent.atomic AtomicLong)))
 
-(defn recorder
-  ([] (recorder {}))
+(defn counter
   ([{:keys [initial]
      :or {initial 0}}]
    (let [atm (AtomicLong. initial)]
-     (reify p/Recorder
+     (reify p/Counter
        (-inc! [_] (.incrementAndGet atm))
        (-dec! [_] (.decrementAndGet atm))
        clojure.lang.IDeref
        (deref [_] (.get atm))))))
 
 (defn clock
-  ([] (clock {}))
   ([_opts]
    (reify p/Clock
      (-duration [_ t] (- (System/currentTimeMillis) t))
      clojure.lang.IDeref
      (deref [_] (System/currentTimeMillis)))))
 
+(defn- noop [& _])
+
 (defn request
-  [{:keys [clock sampler recorder limit ; deps
-           accept]
+  [{:keys [clock sampler counter limit ; deps
+           accept? dropped?]
     :as limiter}]
   (let [current-limit @limit
-        in-flight (p/-inc! recorder)
+        in-flight (p/-inc! counter)
         start-time @clock
-        accepted (accept in-flight current-limit)
-        {:qbits.flex.hooks/keys [complete ignore drop]
-         :or {complete identity
-              ignore identity
-              drop identity}} limiter]
-
+        ;; whether we're still within acceptable limits
+        accepted (accept? in-flight current-limit)
+        {:qbits.flex.hooks/keys [reject complete]
+         :or {reject noop complete noop}} limiter]
     (reify p/Request
       (-accepted? [_] accepted)
-      (-rejected? [_] (not accepted))
 
       (-complete! [this]
-        (let [rtt (p/duration clock
-                              start-time)]
+        (let [rtt (p/duration clock start-time)
+              in-flight @counter
+              [old-rtt new-rtt] (p/sample! sampler rtt)
+              ;; "drop" as in avg drop, not request drop
+              dropped (dropped? old-rtt new-rtt)]
           (p/update! limit
-                     (p/sample! sampler rtt)
                      rtt
-                     @recorder
-                     false))
-        (p/-dec! recorder)
-        (complete this))
+                     in-flight
+                     dropped)
+          (p/-dec! counter)
+          (complete this rtt in-flight dropped)))
 
-      (-ignore! [this]
-        (p/dec! recorder)
-        (ignore this))
-
-      (-drop! [this]
-        ;; (p/update! limit
-        ;;            nil ;; no need to compute current rtt, it's a drop
-        ;;            nil
-        ;;            @recorder
-        ;;            true)
-        (p/dec! recorder)
-        (drop this))
+      (-reject! [this]
+        (p/dec! counter)
+        (reject this))
 
       clojure.lang.IDeref
       (deref [_]
@@ -71,42 +62,40 @@
          ::sample @sampler}))))
 
 (defn- limiter-defaults
-  [{:keys [clock sampler _limit recorder accept] :as opts}]
+  [{:keys [clock sampler limit counter quota accept? dropped?]
+    :or {quota 1.0}
+    :as opts}]
   (cond-> opts
-    (not recorder)
-    (assoc :recorder (qbits.flex/recorder))
+    (not limit)
+    (assoc :limit (aimd/make opts))
+    (not counter)
+    (assoc :counter (qbits.flex/counter opts))
 
     (not sampler)
-    (assoc :sampler (sampler/make))
+    (assoc :sampler (sampler/make opts))
 
     (not clock)
-    (assoc :clock (qbits.flex/clock))
+    (assoc :clock (qbits.flex/clock opts))
 
-    (not accept)
-    (assoc :accept
-           (fn [in-flight current-limit]
-             ;; (tap> [in-flight current-limit])
-             (<= in-flight current-limit)))))
+    (not accept?)
+    (assoc :accept?
+           (fn accept? [in-flight current-limit]
+             (<= in-flight (* quota current-limit))))
 
-(defrecord Limiter [clock sampler limit recorder accept hooks]
+    (not dropped?)
+    (assoc :dropped?
+           (fn dropped? [old-rtt new-rtt]
+             (> new-rtt old-rtt)))))
+
+(defrecord Limiter [clock sampler limit counter accept? hooks]
   p/Limiter
-  (-acquire! [this]
-    (request this))
-
+  (-acquire! [this] (request this))
   clojure.lang.IDeref
   (deref [_]
-    {:in-flight @recorder
+    {:in-flight @counter
      :limit @limit
      :sample @sampler}))
 
 (defn limiter
-  [{:keys [_clock _sampler _limit _recorder _accept] :as opts}]
+  [opts]
   (map->Limiter (limiter-defaults opts)))
-
-(defn quota-limiter
-  "Like `limiter` but will limit the requests to :quota, defaults to
-  1.0 (100%)"
-  [{:as opts :keys [quota] :or {quota 1.0}}]
-  (limiter (assoc opts :accept
-                  (fn [in-flight current-limit]
-                    (<= in-flight (* quota current-limit))))))

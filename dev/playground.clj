@@ -21,7 +21,7 @@
 
 (def limit (qbits.flex.limit.aimd/make
             {:initial-limit 30
-             :max-limit 1000
+             :max-limit 100
              :min-limit 1}))
 
 (def limiter (f/limiter {:limit limit}))
@@ -58,8 +58,8 @@
   (let [handler (qbits.flex.middleware/with-limiter
                   (fn [_]
                     (Thread/sleep
-                     500 ; simulate stable
-                     ;; (max 1 (swap! resp-time inc)) ; simulate slowing down
+                     ;; 1000 ; simulate stable
+                     (max 1 (swap! resp-time inc)) ; simulate slowing down
                      ;; (max 1 (swap! resp-time dec)) ; simulate faster resp times
                      )
                     (ok-response @limiter))

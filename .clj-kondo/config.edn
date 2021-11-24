@@ -1,7 +1,7 @@
 {:linters
  {:clojure-lsp/unused-public-var
   {:level :warning
-   :exclude #{qbits.flex/quota-limiter
+   :exclude #{qbits.flex/limiter
               qbits.flex.limit.fixed/make
               qbits.flex.limit.aimd/make
               qbits.flex.limit.gradient2/make

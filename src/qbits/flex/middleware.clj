@@ -10,5 +10,5 @@
         (try (handler req-map)
              (finally
                (p/complete! request)))
-        (do (p/drop! request)
+        (do (p/reject! request)
             (ex/ex-rejected! @request))))))

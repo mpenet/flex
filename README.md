@@ -6,59 +6,60 @@
 
 > Hold your horses!
 
-Library that implements various methods from TCP congestion control to
-request *limiting*. It's said to be adaptive in the sense that limits
-will evolve over time as we observe/measure average request latency.
+Library that implements various methods from TCP congestion control to request
+*limiting*. It's said to be adaptive in the sense that the `concurrency limit`
+of a system will evolve over time as we observe/measure average request
+roundtrip latency.
 
 We provide both a middleware and an interceptor that will limit
 concurrency according to the limit algo specified.
 
 A typical setup is composed of :
 
-* a *Limit*: defines how limit evolve from RTT averages, dropped
-  requests, timeout. Flex has an
-  additive-increase/multiplicative-decrease (AIMD) implementation
-  right now.
+* a *Limit*: defines how the `concurrency limit` of a context evolve from
+  [RTT](https://en.wikipedia.org/wiki/Round-trip_delay) averages, dropped
+  requests, timeout. Flex has an additive-increase/multiplicative-decrease
+  (AIMD) implementation right now and a few others more experimental.
 
-* a *Limiter* : responsible to handle attempt of acquisition of
-  permission to proceed from current `Limit` and the current in-flight
-  requests at a time. The default limiter just compares the current
-  *Limit* against in-flight requests, potentially with quotas per
-  Limiter instance for a single Limit.
+* *Sampler*: samples RTT for a context in order to compute an average to be used
+later by `Limit` when computing a new `concurrency limit`. It's pluggable so you
+can imagine more fine grained sampling, time-boxed, multi-values (min/max),
+percentiles and whatnot. It's really easy to implement/extend.
 
-* *Sampler*: the initial implementation samples latencies for a context,
-  for instance for a sliding window of N requests or for a time
-  interval, but it's pluggable to you can imagine more fine grained
-  sampling, time-boxed, multi-values (min/max), percentiles and
-  whatnot. It's really easy to implement/extend.
+* *Request* : takes a `Sampler` and a `Limit`implementation and allows to
+performs recording of a request Lifecycle (accepted/rejected/completed) and
+trigger subsequent `concurrency limits` update. Typicall upon every hit to a
+system a Request is *acquired* for checks/update.
 
+* *Limiter* (naming subject to change) : very thin component that will
+  encapsulate a sampler/limit/request implementation and allow to `acquire` a
+  *Request* to inspect/update the `concurrency limits` depending on the request
+  lifecycle (accept/reject/etc). We can also assign quotas at this level: we can
+  have many *Limiters* per *Limit*/*Sampler*, this allows to say client A should
+  only be allowed 20% of the available concurrency limits against that system
+  and so on (it's set per Limiter instance). 
 
-How it works:
+How it works in practice:
 
-When a request comes in we will check if it will not cause the system
-to reach the current *Limit*.  If the request is accepted we will
-record it's [RTT](https://en.wikipedia.org/wiki/Round-trip_delay) to
-the the Sampler to be able later to compute an average latency value
-for the system, so that we can compute a new *Limit*.
+Typically when we observe that average latency increase we might decrease the
+acceptable `concurrency limit` value and in case of average latency decrease we
+would slowly increase that value. Depending on the *Limit* implementation used,
+the rate at which the `concurrency limit` increase/decrease happens can vary.
+Then the middleware or the interceptor or whatever you choose to implement on
+top, would compare the number of current in-flight requests against the current
+`concurrency limit` to decide to reject/accept/ignore it and then trigger an
+update of the `concurrency limit` accordingly.
 
-Typically when we observe that average latency increase we might
-decrease the acceptable *Limit* value and in case of average latency
-decrease we would slowly increase the *Limit*. Depending on the
-limiter implementation used, the rate at which *Limit*
-increase/decrease happens can vary.  Then the middleware or the
-interceptor or whatever you choose to implement on top, can check the
-number of current in-flight requests against that limit to decide to
-reject/accept/ignore it.
-
-Over time we would see the actual concurrency limit of a service
-stabilize to a level that is its actual acceptable rate for near
-optimal operation and it would adapt with the health of the system it
-protects: if the system is stable it will try to increase limits
-slowly up to `max-limit`, if it's struggling it will lower the limit
-and cause requests to be rejected at the edge.
+Over time we would see the actual `concurrency limit` of a service
+stabilize/converge to a level that is its actual acceptable rate for near
+optimal operation and it would adapt with the health of the system it protects:
+if the system is stable it will try to increase limits slowly up to `max-limit`,
+if it's struggling it will lower the limit and cause requests to be rejected at
+the edge.
 
 This strategies can be applied to many context, they can be used at
 client level, server, queues, executors, per api endpoint, etc...
+
 
 ## Installation
 

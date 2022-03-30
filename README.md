@@ -9,7 +9,7 @@
 Library that implements various methods from TCP congestion control to request
 *limiting*. It's said to be adaptive in the sense that the `concurrency limit`
 of a system will evolve over time as we observe/measure average request
-roundtrip latency.
+round trip latency.
 
 We provide both a middleware and an interceptor that will limit
 concurrency according to the limit algo specified.
@@ -28,7 +28,7 @@ percentiles and whatnot. It's really easy to implement/extend.
 
 * *Request* : takes a `Sampler` and a `Limit`implementation and allows to
 performs recording of a request Lifecycle (accepted/rejected/completed) and
-trigger subsequent `concurrency limits` update. Typicall upon every hit to a
+trigger subsequent `concurrency limits` update. Typically upon every hit to a
 system a Request is *acquired* for checks/update.
 
 * *Limiter* (naming subject to change) : very thin component that will
@@ -51,14 +51,14 @@ top, would compare the number of current in-flight requests against the current
 update of the `concurrency limit` accordingly.
 
 Over time we would see the actual `concurrency limit` of a service
-stabilize/converge to a level that is its actual acceptable rate for near
+stabilise/converge to a level that is its actual acceptable rate for near
 optimal operation and it would adapt with the health of the system it protects:
 if the system is stable it will try to increase limits slowly up to `max-limit`,
 if it's struggling it will lower the limit and cause requests to be rejected at
 the edge.
 
 This strategies can be applied to many context, they can be used at
-client level, server, queues, executors, per api endpoint, etc...
+client level, server, queues, executors, per API endpoint, etc...
 
 
 ## Installation
@@ -79,6 +79,6 @@ The [ring middleware](https://github.com/mpenet/flex/blob/main/src/qbits/flex/mi
 
 ## License
 
-Copyright © 2021 Max Penet
+Copyright © 2022 Max Penet
 
 Distributed under the Eclipse Public License version 1.0.

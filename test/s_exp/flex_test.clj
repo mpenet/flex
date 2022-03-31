@@ -1,6 +1,6 @@
-(ns qbits.flex-test
+(ns s-exp.flex-test
   (:require [clojure.test :refer :all]
-            ;; [qbits.flex :refer :all]
+            ;; [s-exp.flex :refer :all]
             ))
 
 (deftest a-test

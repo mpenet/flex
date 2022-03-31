@@ -1,6 +1,6 @@
-(ns qbits.flex.middleware
-  (:require [qbits.flex.protocols :as p]
-            [qbits.flex.ex :as ex]))
+(ns s-exp.flex.middleware
+  (:require [s-exp.flex.protocols :as p]
+            [s-exp.flex.ex :as ex]))
 
 (defn with-limiter
   [handler {:keys [limiter]}]

@@ -1,5 +1,5 @@
-(ns qbits.flex.limit.fixed
-  (:require [qbits.flex.protocols :as p]))
+(ns s-exp.flex.limit.fixed
+  (:require [s-exp.flex.protocols :as p]))
 
 (def defaults {:limit 20})
 

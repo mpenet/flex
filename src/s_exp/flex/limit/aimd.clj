@@ -1,16 +1,16 @@
-(ns qbits.flex.limit.aimd
+(ns s-exp.flex.limit.aimd
   "Implementation of AIMD Limit,
   https://en.wikipedia.org/wiki/Additive_increase/multiplicative_decrease
 
   By default it will increase by 1 on low avg rtt and backoff by 0.9
   on elevated/ing latency, both functions of current limit are
   modifiable via config"
-  (:require [qbits.flex.protocols :as p]))
+  (:require [s-exp.flex.protocols :as p]))
 
 (def defaults
   {:initial-limit 20
    ;; :round-fn (fn [rtt-avg] (*))
-   :dec-by 0.98
+   :dec-by 0.90
    :min-limit 20
    :max-limit 200
    :inc-limit inc

@@ -1,5 +1,5 @@
-(ns qbits.flex.limit.gradient2
-  (:require [qbits.flex.protocols :as p]))
+(ns s-exp.flex.limit.gradient2
+  (:require [s-exp.flex.protocols :as p]))
 
 (defn factor
   [n]

@@ -1,10 +1,10 @@
-(ns qbits.flex.ex
+(ns s-exp.flex.ex
   (:require [exoscale.ex :as ex]))
 
 (defn ex-rejected
   [data]
   (ex/ex-info "Request rejected"
-              [:qbits.flex/rejected [:exoscale.ex/busy]]
+              [:s-exp.flex/rejected [:exoscale.ex/busy]]
               data))
 
 (defn ex-rejected!

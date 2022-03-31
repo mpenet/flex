@@ -1,10 +1,10 @@
 (ns playground
   (:require [ring.adapter.jetty :as j]
             [exoscale.ex :as ex]
-            [qbits.flex.limit.aimd :as limit]
-            [qbits.flex :as f]
-            [qbits.flex.interceptor :as ix]
-            [qbits.flex.middleware]
+            [s-exp.flex.limit.aimd :as limit]
+            [s-exp.flex :as f]
+            [s-exp.flex.interceptor :as ix]
+            [s-exp.flex.middleware]
             [exoscale.interceptor]))
 
 ;; (def tf (bound-fn* println))
@@ -19,9 +19,9 @@
   {:status 420
    :body (format "Enhance your calm - %s" (ex-message s))})
 
-(def limit (qbits.flex.limit.aimd/make
-            {:initial-limit 30
-             :max-limit 100
+(def limit (s-exp.flex.limit.aimd/make
+            {:initial-limit 10
+             :max-limit 20
              :min-limit 1}))
 
 (def limiter (f/limiter {:limit limit}))
@@ -31,7 +31,7 @@
   (exoscale.interceptor/execute
    {:request request}
    [{:error (fn [_ctx err]
-              (if (ex/type? err :qbits.flex/rejected)
+              (if (ex/type? err :s-exp.flex/rejected)
                 (rejected-response @limiter)
                 {:status 500
                  :body (str "boom -" err)}))
@@ -45,7 +45,6 @@
                      :response
                      (ok-response @limiter)))}]))
 
-
 (defn server+interceptor
   []
   (j/run-jetty #'interceptor-handler
@@ -55,7 +54,7 @@
 (def resp-time (atom 500))
 
 (defn server+middleware []
-  (let [handler (qbits.flex.middleware/with-limiter
+  (let [handler (s-exp.flex.middleware/with-limiter
                   (fn [_]
                     (Thread/sleep
                      ;; 1000 ; simulate stable
@@ -66,7 +65,7 @@
                   {:limiter limiter})]
     (j/run-jetty (fn [request]
                    (ex/try+ (handler request)
-                            (catch :qbits.flex/rejected _
+                            (catch :s-exp.flex/rejected _
                               (rejected-response @limiter))))
                  {:port 8080
                   :join? false})))

@@ -1,6 +1,6 @@
-(ns qbits.flex.sampler.windowed
+(ns s-exp.flex.sampler.windowed
   "Averaging sampler based on naive ring buffer"
-  (:require [qbits.flex.protocols :as p]))
+  (:require [s-exp.flex.protocols :as p]))
 
 (defn avg
   [xs]

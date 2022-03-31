@@ -63,11 +63,13 @@ client level, server, queues, executors, per API endpoint, etc...
 
 ## Installation
 
+{:deps {com.s-exp/flex {:git/sha "..." :git/url "https://github.com/mpenet/flex"}}}
+
 ## Usage
 
 For now just playing via https://github.com/mpenet/flex/blob/main/dev/playground.clj
 
-The [ring middleware](https://github.com/mpenet/flex/blob/main/src/qbits/flex/middleware.clj) is also a very simple example of how things work on the surface:
+The [ring middleware](https://github.com/mpenet/flex/blob/main/src/s-exp/flex/middleware.clj) is also a very simple example of how things work on the surface:
 
 ## Options
 

@@ -1,4 +1,4 @@
-(ns qbits.flex.protocols
+(ns s-exp.flex.protocols
   (:refer-clojure :exclude [time]))
 
 (defprotocol Limit

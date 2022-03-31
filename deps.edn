@@ -1,6 +1,6 @@
-{:deps {org.clojure/clojure {:mvn/version "1.10.2"}
-        exoscale/ex {:mvn/version "0.3.17"}
-        exoscale/interceptor {:mvn/version "0.1.9"}}
+{:deps {org.clojure/clojure {:mvn/version "1.11.0"}
+        exoscale/ex {:mvn/version "0.4.0"}
+        exoscale/interceptor {:mvn/version "0.1.10"}}
 
  :aliases
  {:dev {:extra-deps {ring/ring {:mvn/version "1.9.1"}}}

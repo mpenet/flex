@@ -1,7 +1,7 @@
-(ns qbits.flex
-  (:require [qbits.flex.protocols :as p]
-            [qbits.flex.limit.aimd :as aimd]
-            [qbits.flex.sampler.windowed :as sampler])
+(ns s-exp.flex
+  (:require [s-exp.flex.protocols :as p]
+            [s-exp.flex.limit.aimd :as aimd]
+            [s-exp.flex.sampler.windowed :as sampler])
   (:import (java.util.concurrent.atomic AtomicLong)))
 
 (defn counter
@@ -32,7 +32,7 @@
         start-time @clock
         ;; whether we're still within acceptable limits
         accepted (accept? in-flight current-limit)
-        {:qbits.flex.hooks/keys [reject complete]
+        {:s-exp.flex.hooks/keys [reject complete]
          :or {reject noop complete noop}} limiter]
     (reify p/Request
       (-accepted? [_] accepted)
@@ -69,13 +69,13 @@
     (not limit)
     (assoc :limit (aimd/make opts))
     (not counter)
-    (assoc :counter (qbits.flex/counter opts))
+    (assoc :counter (s-exp.flex/counter opts))
 
     (not sampler)
     (assoc :sampler (sampler/make opts))
 
     (not clock)
-    (assoc :clock (qbits.flex/clock opts))
+    (assoc :clock (s-exp.flex/clock opts))
 
     (not accept?)
     (assoc :accept?

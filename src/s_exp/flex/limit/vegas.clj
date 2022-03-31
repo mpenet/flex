@@ -1,4 +1,4 @@
-(ns qbits.flex.limit.vegas
+(ns s-exp.flex.limit.vegas
   "Implementation adapted from netflix/concurrency-limits
   https://github.com/Netflix/concurrency-limits/blob/master/LICENSE
 
@@ -13,7 +13,7 @@
   typically 4-6.  To allow for better growth and stability at higher
   limits we set alpha=Max(3, 10% of the current limit) and beta=Max(6,
   20% of the current limit)"
-  (:require [qbits.flex.protocols :as p])
+  (:require [s-exp.flex.protocols :as p])
   (:import (java.util.concurrent ThreadLocalRandom)))
 
 (defn- log10

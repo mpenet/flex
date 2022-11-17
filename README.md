@@ -9,7 +9,7 @@
 Library that implements various methods from TCP congestion control to request
 *limiting*. It's said to be adaptive in the sense that the `concurrency limit`
 of a system will evolve over time as we observe/measure average request
-round trip latency.
+round trip time.
 
 We provide both a middleware and an interceptor that will limit
 concurrency according to the limit algo specified.

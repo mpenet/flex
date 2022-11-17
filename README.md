@@ -41,8 +41,8 @@ system a Request is *acquired* for checks/update.
 
 How it works in practice:
 
-Typically when we observe that average latency increase we might decrease the
-acceptable `concurrency limit` value and in case of average latency decrease we
+Typically when we observe that average rtt increase we might decrease the
+acceptable `concurrency limit` value and in case of average rtt decrease we
 would slowly increase that value. Depending on the *Limit* implementation used,
 the rate at which the `concurrency limit` increase/decrease happens can vary.
 Then the middleware or the interceptor or whatever you choose to implement on

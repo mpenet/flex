@@ -2,7 +2,9 @@
 
 <img src="flex.png" width="133" height="133" alt="icon by https://thenounproject.com/ivankostriukov/"/>
 
-**WIP**
+
+
+**No longer maintained, use https://github.com/mpenet/flex instread**
 
 > Hold your horses!
 

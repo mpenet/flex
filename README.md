@@ -4,7 +4,7 @@
 
 
 
-**No longer maintained, use https://github.com/mpenet/flex instread**
+**No longer maintained, use https://github.com/mpenet/flux instead**
 
 > Hold your horses!
 
